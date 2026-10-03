@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ScreenId } from '../types';
 import { IMAGES } from '../data/mockData';
+import { useVideo } from '../context/VideoContext';
 
 interface AIProgressScreenProps {
   onNavigate: (screen: ScreenId) => void;
 }
 
 export const AIProgressScreen: React.FC<AIProgressScreenProps> = ({ onNavigate }) => {
+  const { activeVideo } = useVideo();
   const [progress, setProgress] = useState(68);
   const [currentStepIndex, setCurrentStepIndex] = useState(2);
 
@@ -62,10 +64,10 @@ export const AIProgressScreen: React.FC<AIProgressScreenProps> = ({ onNavigate }
           <div className="flex items-center justify-between mb-6">
             <div>
               <span className="text-xs uppercase font-bold text-slate-400 tracking-wider block">
-                Source Project
+                Source Project &amp; Video Media
               </span>
-              <span className="text-base font-bold text-white">
-                My AI Podcast - Episode 14 (42:18)
+              <span className="text-base font-bold text-white truncate max-w-sm block">
+                {activeVideo?.name || 'My AI Podcast - Episode 14'} ({activeVideo?.durationFormatted || '42:18'})
               </span>
             </div>
             <div className="text-right">
@@ -135,7 +137,7 @@ export const AIProgressScreen: React.FC<AIProgressScreenProps> = ({ onNavigate }
         <div className="flex items-center justify-between bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4">
           <div className="flex items-center gap-3">
             <img
-              src={IMAGES.podcastStudio}
+              src={activeVideo?.thumbnailUrl || IMAGES.podcastStudio}
               alt="Live Processing"
               className="w-16 h-12 rounded-lg object-cover border border-slate-700"
             />

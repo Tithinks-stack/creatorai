@@ -1,4 +1,4 @@
-export type ScreenId = 
+export type ScreenId =
   | 'login'
   | 'create_project'
   | 'dashboard'
@@ -95,3 +95,24 @@ export interface WorkflowCard {
   avatar: string;
   columnId: 'idea' | 'processing' | 'review' | 'published';
 }
+
+export interface UploadedVideo {
+  id: string;
+  name: string;
+  file?: File;
+  url: string;
+  sizeBytes: number;
+  sizeFormatted: string;
+  durationSeconds: number;
+  durationFormatted: string;
+  width?: number;
+  height?: number;
+  resolution?: string;
+  aspectRatio?: string;
+  thumbnailUrl: string;
+  uploadedAt: string;
+  status: 'uploading' | 'ready' | 'error';
+  progress: number;
+  errorMessage?: string;
+}
+

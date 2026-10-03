@@ -58,23 +58,20 @@ export const ScreenSwitcherDock: React.FC<ScreenSwitcherDockProps> = ({ currentS
                     onNavigate(s.id);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left cursor-pointer ${
-                    isSelected
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all text-left cursor-pointer ${isSelected
                       ? 'bg-[#4f46e5] text-white font-semibold shadow-sm'
                       : 'hover:bg-[#f2f3ff] text-[#131b2e]'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                      isSelected ? 'bg-white/20 text-white' : 'bg-[#e2e7ff] text-[#4f46e5]'
-                    }`}>
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isSelected ? 'bg-white/20 text-white' : 'bg-[#e2e7ff] text-[#4f46e5]'
+                      }`}>
                       {s.number}
                     </span>
                     <span className="truncate">{s.label}</span>
                   </div>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 font-medium ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-[#f2f3ff] text-[#777587]'
-                  }`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 font-medium ${isSelected ? 'bg-white/20 text-white' : 'bg-[#f2f3ff] text-[#777587]'
+                    }`}>
                     {s.tag}
                   </span>
                 </button>

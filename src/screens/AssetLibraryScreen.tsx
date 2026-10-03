@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
-import { ScreenId } from '../types';
-import { ASSETS_DATA } from '../data/mockData';
+import { ScreenId, Asset } from '../types';
+import { useVideo } from '../context/VideoContext';
+import { UploadVideoModal } from '../components/UploadVideoModal';
 
 interface AssetLibraryScreenProps {
   onNavigate: (screen: ScreenId) => void;
 }
 
 export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNavigate }) => {
+  const { assets, setActiveVideo, uploadedVideos } = useVideo();
   const [filterType, setFilterType] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('Recently Updated');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
 
-  const filteredAssets = ASSETS_DATA.filter((a) => {
+  const filteredAssets = assets.filter((a) => {
     if (filterType === 'Videos' && a.type !== 'video') return false;
     if (filterType === 'Audio' && a.type !== 'audio') return false;
     if (filterType === 'Transcripts' && a.type !== 'transcript') return false;
@@ -22,6 +25,24 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
     if (searchQuery && !a.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
+
+  const handleOpenAsset = (asset: Asset) => {
+    // If it corresponds to an uploaded video, set activeVideo
+    const matchedUploaded = uploadedVideos.find((v) => v.name === asset.name);
+    if (matchedUploaded) {
+      setActiveVideo(matchedUploaded);
+    }
+    setPreviewAsset(asset);
+  };
+
+  const handleEditInClipEditor = (asset: Asset) => {
+    const matchedUploaded = uploadedVideos.find((v) => v.name === asset.name);
+    if (matchedUploaded) {
+      setActiveVideo(matchedUploaded);
+    }
+    setPreviewAsset(null);
+    onNavigate('clip_editor');
+  };
 
   return (
     <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6 font-['Inter'] pb-28">
@@ -35,7 +56,7 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
             <span className="text-[#4f46e5] font-semibold">Active Repository</span>
           </div>
           <h1 className="font-['Plus_Jakarta_Sans'] text-2xl md:text-3xl font-bold text-[#131b2e] tracking-tight">
-            Asset Library
+            Asset Library &amp; Footage Hub
           </h1>
           <p className="text-sm text-[#464555] mt-1 max-w-2xl">
             All your raw videos, extracted clips, transcripts, and generated graphics in one organized workspace.
@@ -43,16 +64,19 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="bg-white text-[#131b2e] border border-[#c7c4d8] hover:bg-[#f2f3ff] text-xs font-semibold px-4 py-2.5 rounded-lg flex items-center gap-2 transition-colors duration-150 shadow-xs cursor-pointer active:scale-[0.98]">
-            <span className="material-symbols-outlined text-[18px] text-[#464555]">create_new_folder</span>
-            <span>New Folder</span>
-          </button>
           <button
             onClick={() => onNavigate('create_project')}
+            className="bg-white text-[#131b2e] border border-[#c7c4d8] hover:bg-[#f2f3ff] text-xs font-semibold px-4 py-2.5 rounded-lg flex items-center gap-2 transition-colors duration-150 shadow-xs cursor-pointer active:scale-[0.98]"
+          >
+            <span className="material-symbols-outlined text-[18px] text-[#464555]">add_circle</span>
+            <span>New Project</span>
+          </button>
+          <button
+            onClick={() => setIsUploadModalOpen(true)}
             className="bg-[#4f46e5] hover:bg-[#3525cd] text-white text-xs font-semibold px-4 py-2.5 rounded-lg flex items-center gap-2 transition-all duration-150 shadow-xs cursor-pointer active:scale-[0.98]"
           >
             <span className="material-symbols-outlined text-[18px]">cloud_upload</span>
-            <span>+ Upload Asset</span>
+            <span>+ Upload Video</span>
           </button>
         </div>
       </div>
@@ -66,17 +90,17 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
               <span className="text-xs font-bold text-[#131b2e]">Storage Capacity</span>
             </div>
             <span className="text-xs text-[#464555]">
-              <strong className="text-[#131b2e] font-bold">14.2 GB</strong> of 100 GB
+              <strong className="text-[#131b2e] font-bold">14.8 GB</strong> of 100 GB
             </span>
           </div>
           <div className="w-full h-2.5 bg-[#f2f3ff] rounded-full overflow-hidden flex">
-            <div className="h-full bg-[#4f46e5] rounded-full" style={{ width: '14.2%' }}></div>
+            <div className="h-full bg-[#4f46e5] rounded-full" style={{ width: '14.8%' }}></div>
           </div>
           <p className="text-[11px] text-[#464555] mt-1.5 flex items-center gap-1">
             <span className="material-symbols-outlined text-[14px] text-[#006c49]" style={{ fontVariationSettings: "'FILL' 1" }}>
               check_circle
             </span>
-            85.8 GB free on your Creator Pro tier
+            85.2 GB free on your Creator Pro tier
           </p>
         </div>
 
@@ -86,10 +110,13 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
               <span className="material-symbols-outlined text-[20px]">video_file</span>
             </div>
             <div>
-              <div className="font-['Plus_Jakarta_Sans'] text-base leading-tight text-[#131b2e] font-bold">12</div>
+              <div className="font-['Plus_Jakarta_Sans'] text-base leading-tight text-[#131b2e] font-bold">
+                {assets.filter((a) => a.type === 'video').length}
+              </div>
               <div className="text-[11px] text-[#464555]">Master Recordings</div>
             </div>
           </div>
+
           <div className="flex items-center gap-3 bg-[#f2f3ff] px-4 py-2.5 rounded-lg border border-[#c7c4d8]/60">
             <div className="w-8 h-8 rounded-lg bg-[#e2dfff] flex items-center justify-center text-[#4f46e5]">
               <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -97,81 +124,11 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
               </span>
             </div>
             <div>
-              <div className="font-['Plus_Jakarta_Sans'] text-base leading-tight text-[#131b2e] font-bold">34</div>
-              <div className="text-[11px] text-[#464555]">AI Clips Generated</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 bg-[#f2f3ff] px-4 py-2.5 rounded-lg border border-[#c7c4d8]/60">
-            <div className="w-8 h-8 rounded-lg bg-[#eaedff] flex items-center justify-center text-[#006c49]">
-              <span className="material-symbols-outlined text-[20px]">article</span>
-            </div>
-            <div>
-              <div className="font-['Plus_Jakarta_Sans'] text-base leading-tight text-[#131b2e] font-bold">9</div>
-              <div className="text-[11px] text-[#464555]">Transcripts Indexed</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Pinned Workspaces & Folders */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px] text-[#464555]" style={{ fontVariationSettings: "'FILL' 1" }}>
-              push_pin
-            </span>
-            <h2 className="font-['Plus_Jakarta_Sans'] text-base font-bold text-[#131b2e]">Pinned Workspaces &amp; Folders</h2>
-          </div>
-          <button className="text-xs text-[#4f46e5] font-semibold hover:underline flex items-center gap-1 cursor-pointer">
-            <span>View all folders</span>
-            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white border border-[#c7c4d8] hover:border-[#4f46e5]/60 hover:shadow-md transition-all duration-200 rounded-xl p-4 flex items-center justify-between group cursor-pointer">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-11 h-11 rounded-lg bg-[#e2dfff]/50 group-hover:bg-[#e2dfff] text-[#4f46e5] flex items-center justify-center transition-colors">
-                <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
+              <div className="font-['Plus_Jakarta_Sans'] text-base leading-tight text-[#131b2e] font-bold">
+                {assets.filter((a) => a.type === 'clip').length}
               </div>
-              <div className="truncate">
-                <h3 className="text-xs font-bold text-[#131b2e] group-hover:text-[#4f46e5] transition-colors truncate">
-                  My AI Podcast (Season 1)
-                </h3>
-                <p className="text-[11px] text-[#464555]">18 files • updated 2h ago</p>
-              </div>
+              <div className="text-[11px] text-[#464555]">Extracted Clips</div>
             </div>
-            <span className="material-symbols-outlined text-[#777587] text-[18px]">more_vert</span>
-          </div>
-
-          <div className="bg-white border border-[#c7c4d8] hover:border-[#4f46e5]/60 hover:shadow-md transition-all duration-200 rounded-xl p-4 flex items-center justify-between group cursor-pointer">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-11 h-11 rounded-lg bg-[#eaedff] group-hover:bg-[#e2e7ff] text-[#131b2e] flex items-center justify-center transition-colors">
-                <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
-              </div>
-              <div className="truncate">
-                <h3 className="text-xs font-bold text-[#131b2e] group-hover:text-[#4f46e5] transition-colors truncate">
-                  College Tech Talk Series
-                </h3>
-                <p className="text-[11px] text-[#464555]">9 files • updated yesterday</p>
-              </div>
-            </div>
-            <span className="material-symbols-outlined text-[#777587] text-[18px]">more_vert</span>
-          </div>
-
-          <div className="bg-white border border-[#c7c4d8] hover:border-[#4f46e5]/60 hover:shadow-md transition-all duration-200 rounded-xl p-4 flex items-center justify-between group cursor-pointer">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-11 h-11 rounded-lg bg-[#eaedff] group-hover:bg-[#e2e7ff] text-[#131b2e] flex items-center justify-center transition-colors">
-                <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
-              </div>
-              <div className="truncate">
-                <h3 className="text-xs font-bold text-[#131b2e] group-hover:text-[#4f46e5] transition-colors truncate">
-                  Viral TikTok Hooks &amp; B-Roll
-                </h3>
-                <p className="text-[11px] text-[#464555]">15 files • updated 3 days ago</p>
-              </div>
-            </div>
-            <span className="material-symbols-outlined text-[#777587] text-[18px]">more_vert</span>
           </div>
         </div>
       </div>
@@ -190,9 +147,6 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
               placeholder="Search assets, transcripts, hooks, tags..."
               className="w-full pl-10 pr-10 py-2.5 bg-white border border-[#c7c4d8] rounded-lg text-sm text-[#131b2e] placeholder:text-[#777587] focus:outline-none focus:border-[#4f46e5] shadow-xs"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] bg-[#f2f3ff] px-1.5 py-0.5 rounded text-[#464555] border border-[#c7c4d8]/60 font-mono">
-              Ctrl + F
-            </span>
           </div>
 
           <div className="flex items-center gap-3 self-end sm:self-center">
@@ -232,12 +186,12 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
         {/* Filter Pills */}
         <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 text-xs">
           {[
-            { id: 'All', label: 'All Assets', count: 42 },
-            { id: 'Videos', label: 'Videos (12)', icon: 'videocam' },
-            { id: 'Audio', label: 'Audio & Music (8)', icon: 'graphic_eq' },
-            { id: 'Transcripts', label: 'Transcripts (9)', icon: 'description' },
-            { id: 'Clips', label: 'Short Clips (13)', icon: 'movie_filter' },
-            { id: 'Graphics', label: 'Social Posts & Graphics', icon: 'image' },
+            { id: 'All', label: 'All Assets', count: assets.length },
+            { id: 'Videos', label: 'Videos', icon: 'videocam', count: assets.filter((a) => a.type === 'video').length },
+            { id: 'Clips', label: 'Short Clips', icon: 'movie_filter', count: assets.filter((a) => a.type === 'clip').length },
+            { id: 'Transcripts', label: 'Transcripts', icon: 'description', count: assets.filter((a) => a.type === 'transcript').length },
+            { id: 'Audio', label: 'Audio & Music', icon: 'graphic_eq', count: assets.filter((a) => a.type === 'audio').length },
+            { id: 'Graphics', label: 'Social Posts & Graphics', icon: 'image', count: assets.filter((a) => a.type === 'image').length },
           ].map((pill) => {
             const isActive = filterType === pill.id;
             return (
@@ -252,7 +206,7 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
               >
                 {pill.icon && <span className="material-symbols-outlined text-[16px]">{pill.icon}</span>}
                 <span>{pill.label}</span>
-                {pill.count && (
+                {pill.count !== undefined && (
                   <span className="bg-[#4f46e5] text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
                     {pill.count}
                   </span>
@@ -273,7 +227,10 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
             <div>
               {/* Media Preview Slot */}
               {asset.type === 'transcript' ? (
-                <div className="relative w-full aspect-video bg-[#f2f3ff] p-4 flex flex-col justify-between border-b border-[#c7c4d8]/40">
+                <div
+                  onClick={() => onNavigate('transcript')}
+                  className="relative w-full aspect-video bg-[#f2f3ff] p-4 flex flex-col justify-between border-b border-[#c7c4d8]/40 cursor-pointer"
+                >
                   <div className="flex items-center justify-between">
                     <span className="bg-white border border-[#c7c4d8] px-2.5 py-1 rounded text-[11px] text-[#131b2e] font-mono flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-[16px] text-[#006c49]">article</span>
@@ -325,7 +282,10 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
                   </div>
                 </div>
               ) : (
-                <div className="relative w-full aspect-video bg-[#283044] overflow-hidden">
+                <div
+                  onClick={() => handleOpenAsset(asset)}
+                  className="relative w-full aspect-video bg-[#283044] overflow-hidden cursor-pointer"
+                >
                   <img
                     src={asset.thumbnail}
                     alt={asset.name}
@@ -344,20 +304,26 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
                   {/* Hover Overlay */}
                   <div className="absolute inset-0 bg-[#283044]/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <button
-                      onClick={() => onNavigate('clip_editor')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenAsset(asset);
+                      }}
                       className="p-2.5 rounded-full bg-white text-[#4f46e5] hover:scale-110 transition-transform shadow-md cursor-pointer"
-                      title="Preview"
+                      title="Play Video"
                     >
                       <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                         play_arrow
                       </span>
                     </button>
                     <button
-                      onClick={() => onNavigate('repurpose')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditInClipEditor(asset);
+                      }}
                       className="p-2.5 rounded-full bg-white text-[#131b2e] hover:text-[#4f46e5] hover:scale-110 transition-transform shadow-md cursor-pointer"
-                      title="Repurpose"
+                      title="Edit Clip"
                     >
-                      <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
+                      <span className="material-symbols-outlined text-[20px]">edit</span>
                     </button>
                   </div>
                 </div>
@@ -374,7 +340,6 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
                       {asset.size} • {asset.metadata}
                     </p>
                   </div>
-                  <span className="material-symbols-outlined text-[#777587] text-[18px]">more_vert</span>
                 </div>
 
                 <div className="flex flex-wrap gap-1.5 mt-3">
@@ -399,12 +364,12 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
                 onClick={() => {
                   if (asset.type === 'transcript') onNavigate('transcript');
                   else if (asset.type === 'clip') onNavigate('adapt');
-                  else onNavigate('clip_editor');
+                  else handleEditInClipEditor(asset);
                 }}
                 className="text-[#4f46e5] hover:text-[#3525cd] font-semibold flex items-center gap-1 cursor-pointer"
               >
                 <span>
-                  {asset.type === 'transcript' ? 'Show Notes' : asset.type === 'clip' ? 'Publish' : 'Extract Highlights'}
+                  {asset.type === 'transcript' ? 'Show Notes' : asset.type === 'clip' ? 'Publish' : 'Edit in Clip Editor'}
                 </span>
                 <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
               </button>
@@ -413,31 +378,64 @@ export const AssetLibraryScreen: React.FC<AssetLibraryScreenProps> = ({ onNaviga
         ))}
       </div>
 
-      {/* Batch Actions Dock */}
-      <div className="mt-4 p-4 rounded-xl bg-white border border-[#c7c4d8]/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="w-8 h-8 rounded-lg bg-[#e2dfff] flex items-center justify-center text-[#4f46e5]">
-            <span className="material-symbols-outlined text-[20px]">tips_and_updates</span>
-          </span>
-          <div>
-            <span className="text-xs font-bold text-[#131b2e]">Pro Creator Tip: Batch Auto-Repurposing</span>
-            <p className="text-xs text-[#464555]">Select multiple master clips to queue automated AI shorts, transcripts, and carousel slides in parallel.</p>
+      {/* Upload Video Modal */}
+      <UploadVideoModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onSuccess={() => setIsUploadModalOpen(false)}
+      />
+
+      {/* Video Preview Modal */}
+      {previewAsset && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full overflow-hidden shadow-2xl text-white">
+            <div className="px-5 py-3.5 bg-slate-950 flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-indigo-400">movie</span>
+                <span className="text-xs font-bold truncate max-w-md">{previewAsset.name}</span>
+              </div>
+              <button
+                onClick={() => setPreviewAsset(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            <div className="bg-black relative max-h-[500px] flex items-center justify-center">
+              <video
+                src={previewAsset.previewUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
+                controls
+                autoPlay
+                className="w-full max-h-[460px] object-contain"
+              />
+            </div>
+
+            <div className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-900">
+              <div className="text-xs text-slate-400 space-y-1">
+                <p className="font-semibold text-white">{previewAsset.metadata}</p>
+                <p>Duration: {previewAsset.duration || 'N/A'} • Size: {previewAsset.size}</p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setPreviewAsset(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => handleEditInClipEditor(previewAsset)}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-sm">edit</span>
+                  <span>Open in Clip Editor</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="bg-[#f2f3ff] hover:bg-[#eaedff] text-[#131b2e] text-xs font-semibold px-3.5 py-2 rounded-lg border border-[#c7c4d8] transition-colors flex items-center gap-1.5 cursor-pointer">
-            <span className="material-symbols-outlined text-[16px]">sync</span>
-            <span>Sync Cloud Backup</span>
-          </button>
-          <button
-            onClick={() => onNavigate('repurpose')}
-            className="bg-[#4f46e5] hover:bg-[#3525cd] text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
-            <span>Batch AI Repurpose</span>
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

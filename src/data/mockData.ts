@@ -156,6 +156,7 @@ export const ASSETS_DATA: Asset[] = [
     tags: ["#podcast", "#master", "Dual Host"],
     updatedAt: "2h ago",
     metadata: "Master Video Cut",
+    previewUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
   },
   {
     id: "ast_2",
@@ -168,6 +169,7 @@ export const ASSETS_DATA: Asset[] = [
     tags: ["#clip", "#viral-hook", "TikTok / Shorts"],
     updatedAt: "4h ago",
     metadata: "AI Virality Score: 94/100",
+    previewUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
   },
   {
     id: "ast_3",
@@ -200,6 +202,7 @@ export const ASSETS_DATA: Asset[] = [
     tags: ["#tutorial", "#screencast", "12 Chapters"],
     updatedAt: "3d ago",
     metadata: "Chapter Markers Embedded",
+    previewUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
   },
   {
     id: "ast_6",
