@@ -1,0 +1,6 @@
+{
+  "name": "CreatorAi - Content Repurposing & Studio",
+  "description": "Transform raw video, audio, and transcripts into multi-channel viral clips, hooks, and platform-adapted releases.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
